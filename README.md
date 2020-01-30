@@ -4,6 +4,7 @@
 - [Intro to Test React Components with Jest and React Testing Library](#intro-to-test-react-components-with-jest-and-react-testing-library)
 - [Render a React Component for testing using ReactDOM](#render-a-react-component-for-testing-using-reactdom)
 - [Use Jest DOM for improved assertions](#use-jest-dom-for-improved-assertions)
+- [Use DOM Testing Library to Write More Maintainable React Tests](#use-dom-testing-library-to-write-more-maintainable-react-tests)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -63,3 +64,77 @@ import '@testing-library/jest-dom/extend-expect'
 
 That makes it a lot easier to read tests that are interacting with the DOM, as
 well as get better error messages when you're making assertions on DOM nodes.
+
+# Use DOM Testing Library to Write More Maintainable React Tests
+
+Note: Ignore casing by regex `/regex/i`
+
+Our tests are currently tightly coupled to the implementation of our component’s
+element structure. A refactor to that structure wont break our application, but
+will definitely break our tests because we’re testing implementation details.
+Let’s use DOM Testing Library to create a custom render function that will give
+us some helpful utilities for searching for elements in the DOM in the same way
+a user would.
+
+If I go into `favorite-number.js` and
+`break the association between this label and the input by making a typo in the htmlFor`
+for example and save this, my `test is still passing` but my
+`application is actually broken for people using screen readers` and other
+assistive technologies.
+
+Make an assertion to make sure that the label and the input are associated
+together properly. It can be done by checking that label htmlFor attribute and
+input id attribute are same.
+
+There are various ways to associate a label and an input together and I don't
+want to have to worry about all of those different mechanisms for associating
+those together. It'd be even better if I had some sort of abstraction that let
+me get the input by the label. That's exactly what DOM testing library does for
+us.
+
+```js
+import {queries} from '@testing-library/dom'
+
+test('renders a number input with a label "Favorite Number"', () => {
+  const div = document.createElement('div')
+  ReactDOM.render(<FavoriteNumber />, div)
+  const input = queries.getByLabelText(div, 'Favorite Number')
+  expect(input).toHaveAttribute('type', 'number')
+})
+```
+
+> Get an error message. It says it Found a label with the text favorite number,
+> however, no form control was found associated to that label. Make sure you're
+> using the "for" attribute or the "aria-labelledby" attribute correctly.
+
+We see the typo I and can correct the spelling.
+
+Make the label text case-insensitive What I'm going to do is instead of using a
+string I'm going to use a regex. We'll pass the `i` Flag which will ignore case.
+That makes my query a lot more resilient to changes in my code.
+
+`const input = queries.getByLabelText(div, /favorite number/i)`
+
+Another improvement, instead of importing `queries`, import
+`getQueriesForElement`, so that you can avoid passing `div` everywhere
+
+```js
+import {queries, getQueriesForElement} from '@testing-library/dom'
+
+test('renders a number input with a label "Favorite Number"', () => {
+  const div = document.createElement('div')
+  ReactDOM.render(<FavoriteNumber />, div)
+
+  const {getByLabelText} = getQueriesForElement(div)
+
+  const input = getByLabelText(/favorite number/i)
+  expect(input).toHaveAttribute('type', 'number')
+})
+```
+
+From `getQueriesForElement` we have a bunch of other queries that we can access
+from DOM testing library for finding elements in the render DOM.
+
+We have an implicit assertion here that says, "We do have a label with the text
+favorite number." That label is associated to an input which we can make this
+assertion on.
