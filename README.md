@@ -5,6 +5,7 @@
 - [Render a React Component for testing using ReactDOM](#render-a-react-component-for-testing-using-reactdom)
 - [Use Jest DOM for improved assertions](#use-jest-dom-for-improved-assertions)
 - [Use DOM Testing Library to Write More Maintainable React Tests](#use-dom-testing-library-to-write-more-maintainable-react-tests)
+- [Use React Testing Library to Render and Test React Components](#use-react-testing-library-to-render-and-test-react-components)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -138,3 +139,51 @@ from DOM testing library for finding elements in the render DOM.
 We have an implicit assertion here that says, "We do have a label with the text
 favorite number." That label is associated to an input which we can make this
 assertion on.
+
+So instead of jest-dom, dom testing library gives us access to dom elements
+
+# Use React Testing Library to Render and Test React Components
+
+Let’s create a simple render method to be able to reuse this functionality for
+our other tests. The render method we’ve created is similar to the render method
+that’s provided by React Testing Library. Let’s swap our implementation to that!
+
+So
+
+```js
+import React from 'react'
+import ReactDOM from 'react-dom'
+import {getQueriesForElement} from '@testing-library/dom'
+import {FavoriteNumber} from '../favorite-number'
+
+function render(ui) {
+  const container = document.createElement('div')
+  ReactDOM.render(ui, container)
+  const queries = getQueriesForElement(container)
+  return {container, ...queries}
+}
+
+test('renders a number input with a label "Favorite Number', () => {
+  const {getByLabelText} = render(<FavoriteNumber />)
+  const input = getByLabelText(/favorite number/i)
+  expect(input).toHaveAttribute('type', 'number')
+})
+```
+
+gets replaced by:
+
+```js
+import React from 'react'
+import {render} from '@testing-library/react'
+import {FavoriteNumber} from '../favorite-number'
+
+test('renders a number input with a label "Favorite Number"', () => {
+  const {getByLabelText} = render(<FavoriteNumber />)
+  const input = getByLabelText(/favorite number/i)
+  expect(input).toHaveAttribute('type', 'number')
+})
+```
+
+OPull in render from `@testing-library/react`. We can get rid of that render
+function we created. We can also get rid of the react DOM and testing library
+DOM imports. That is all that we have left.
