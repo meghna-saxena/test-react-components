@@ -1,7 +1,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Intro to Test React Components with Jest and React Testing Library](#intro-to-test-react-components-with-jest-and-react-testing-library)
 - [Render a React Component for testing using ReactDOM](#render-a-react-component-for-testing-using-reactdom)
 - [Use Jest DOM for improved assertions](#use-jest-dom-for-improved-assertions)
@@ -10,6 +9,8 @@
 - [Debug the DOM State During Tests using React Testing Library’s debug Function](#debug-the-dom-state-during-tests-using-react-testing-librarys-debug-function)
 - [Test React Component Event Handlers with fireEvent from React Testing Library](#test-react-component-event-handlers-with-fireevent-from-react-testing-library)
 - [Improve Test Confidence with the User Event Module](#improve-test-confidence-with-the-user-event-module)
+- [Test Prop Updates with React Testing Library](#test-prop-updates-with-react-testing-library)
+- [Assert That Something is NOT Rendered with React Testing Library](#assert-that-something-is-not-rendered-with-react-testing-library)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -265,3 +266,91 @@ test('entering an invalid value shows an error message', () => {
   expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
 })
 ```
+
+# Test Prop Updates with React Testing Library
+
+Sometimes it can be useful to change the props of a component you’ve rendered
+and make assertions about what’s rendered after that prop change has taken
+place. Let’s see how to go about doing this with React Testing Library.
+
+One situation that you sometimes run across is what happens if I re-render this
+FavoriteNumber, given its current state with new props? For example, I could
+take this FavoriteNumber and re-render it at the bottom of our file with a max
+of 10. That would mean that the input that the user typed is within the limit.
+
+pull in `rerender` from a render call up here and we'll rerender FavoriteNumber
+with a max of 10. Let's go ahead and grab debug from our render call and I'll
+add a debug before and after that rerender.
+
+```js
+test('entering an invalid value shows an error message', () => {
+  const {getByLabelText, getByRole, rerender, debug} = render(
+    <FavoriteNumber />,
+  )
+  const input = getByLabelText(/favorite number/i)
+  user.type(input, '10')
+  expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
+  debug()
+  rerender(<FavoriteNumber max={10} />)
+  debug()
+})
+```
+
+We'll save that and we'll take a look at our test. Here, we'll see that the
+number is invalid, shows up on that first debug and then on the second debug, we
+see that the error message is no longer present. In review, if you need to
+re-render that same component with new props, you simply use the re-render
+method that you get back from render.
+
+`Re-render will take the UI that you provide to it and render that UI through the exact same container that it's rendering your original UI to, allowing you to test situations when props are updated.`
+
+# Assert That Something is NOT Rendered with React Testing Library
+
+It’s pretty straightforward to assert that a certain element is rendered with
+react-testing-library, but what if we want to ensure that something is NOT being
+rendered. For example, if we re-render our component with a different maximum
+amount leading to the error message being hidden. Let’s see how we can use the
+query\* APIs from react-testing-library to assert that certain elements are not
+rendered.
+
+```js
+test('entering an invalid value shows an error message', () => {
+  const {getByLabelText, getByRole, rerender} = render(<FavoriteNumber />)
+  const input = getByLabelText(/favorite number/i)
+  user.type(input, '10')
+  expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
+  rerender(<FavoriteNumber max={10} />)
+})
+```
+
+Now, I'm going to just hold this over the same expect line and we'll say,
+toBeNull(). That should no longer be rendered at all.
+
+```js
+expect(getByRole('alert')).toBeNull()
+```
+
+The problem is that getByRole, any get prefixed query getByLabelText, getByRole,
+getByAll the text, any of this are going to through an error if it can't find
+the element that it's supposed to be matching.
+
+That is why queryByRole exists.
+`Any query that starts with the text query is going to return null instead of throwing an error`.if
+we use queryByRole and then open up our tests, our tests are passing now.
+
+```js
+test('entering an invalid value shows an error message', () => {
+  const {getByLabelText, getByRole, queryByRole, rerender} = render(
+    <FavoriteNumber />,
+  )
+  const input = getByLabelText(/favorite number/i)
+  user.type(input, '10')
+  expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
+  rerender(<FavoriteNumber max={10} />)
+  expect(queryByRole('alert')).toBeNull()
+})
+```
+
+Typically, using 'get' will leave you with much better error messages, but if
+you do need to verify that an element is not rendered, then using a query
+function is the way to go.
