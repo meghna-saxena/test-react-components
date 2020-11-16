@@ -1,11 +1,15 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Intro to Test React Components with Jest and React Testing Library](#intro-to-test-react-components-with-jest-and-react-testing-library)
 - [Render a React Component for testing using ReactDOM](#render-a-react-component-for-testing-using-reactdom)
 - [Use Jest DOM for improved assertions](#use-jest-dom-for-improved-assertions)
 - [Use DOM Testing Library to Write More Maintainable React Tests](#use-dom-testing-library-to-write-more-maintainable-react-tests)
 - [Use React Testing Library to Render and Test React Components](#use-react-testing-library-to-render-and-test-react-components)
+- [Debug the DOM State During Tests using React Testing Library’s debug Function](#debug-the-dom-state-during-tests-using-react-testing-librarys-debug-function)
+- [Test React Component Event Handlers with fireEvent from React Testing Library](#test-react-component-event-handlers-with-fireevent-from-react-testing-library)
+- [Improve Test Confidence with the User Event Module](#improve-test-confidence-with-the-user-event-module)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -187,3 +191,77 @@ test('renders a number input with a label "Favorite Number"', () => {
 OPull in render from `@testing-library/react`. We can get rid of that render
 function we created. We can also get rid of the react DOM and testing library
 DOM imports. That is all that we have left.
+
+# Debug the DOM State During Tests using React Testing Library’s debug Function
+
+```js
+const {getByLabelText, debug} = render(<FavoriteNumber />)
+debug()
+```
+
+Tests continues to pass, but I can see what the DOM looks like at this point in
+time. I can move it down to the bottom of my test and see what it looks like at
+that point in time.
+
+If I want to look at a specific DOM node, then I can pass it as an argument to
+debug and get only the output for that particular DOM node, `debug(input)`. To
+do this, we simply bring in the debug method from the object that's returned
+from calling render, and then we can call debug at any point in time with or
+without an argument.
+
+# Test React Component Event Handlers with fireEvent from React Testing Library
+
+The `fireEvent` utility in React Testing Library supports all the events that
+you regularly use in the web (change, click, etc.). Let’s see how we can test
+our change event handler with an input
+
+```js
+test('entering an invalid value shows an error message', () => {
+  const {getByLabelText} = render(<FavoriteNumber />)
+  const input = getByLabelText(/favorite number/i)
+  fireEvent.change(input, {target: {value: '10'}})
+  expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
+})
+```
+
+In review, to make this work, we simply got the `getByLabelText` and `getByRole`
+by rendering favorite number. We'll get the input by its label text. We'll fire
+a change event on the input. We want that input's value to be 10. Then we can
+expect `getByRole('alert')` to have the text content, "The number is invalid."
+
+# Improve Test Confidence with the User Event Module
+
+The User Event module is part of the Testing Library family of tools and lets
+you fire events on DOM nodes that more closely resemble the way your users will
+interact with your elements. Let’s refactor our fire event usages to use that
+instead.
+
+When a user makes a change to an input, there are typically a couple browser
+events that are going to happen. The input is going to receive a focus event.
+It's going to receive specific input like keydown, keyup, all of those different
+kinds of events that are going on.
+
+Here, we're only firing a change event. Our test is not exactly representing
+what the user is going to be experiencing when they're interacting with our
+component. Most of the time, this isn't all that problematic. Using fireEvent
+the way we are, it works just fine, but sometimes it can be a problem.
+
+If you want to really resemble the way that your software is being used, then I
+recommend that you give this module a look. We're going to import user from
+'@testing-library/user-event'. user has a couple methods on it that we can call.
+
+The user event module in the testing library family uses fireEvent to fire a
+whole bunch of events that will typically happen when a user types into an
+input, like the keydown, the keyup, as well as the change event.
+
+```js
+import user from '@testing-library/user-event'
+
+test('entering an invalid value shows an error message', () => {
+  const {getByLabelText, getByRole} = render(<FavoriteNumber />)
+  const input = getByLabelText(/favorite number/i)
+  user.type(input, '10')
+  // fireEvent.change(input, {target: {value: '10'}})
+  expect(getByRole('alert')).toHaveTextContent(/the number is invalid/i)
+})
+```
