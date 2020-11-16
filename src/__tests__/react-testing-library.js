@@ -17,11 +17,13 @@
 // })
 
 import React from 'react'
-import {render} from '@testing-library/react'
+import {render, screen} from '@testing-library/react'
+import '@testing-library/jest-dom/extend-expect'
 import {FavoriteNumber} from '../favorite-number'
 
 test('renders a number input with a label "Favorite Number"', () => {
-  const {getByLabelText} = render(<FavoriteNumber />)
-  const input = getByLabelText(/favorite number/i)
+  // const {getByLabelText} = render(<FavoriteNumber />)
+  render(<FavoriteNumber />)
+  const input = screen.getByLabelText(/favorite number/i)
   expect(input).toHaveAttribute('type', 'number')
 })

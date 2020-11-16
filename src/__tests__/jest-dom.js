@@ -1,9 +1,9 @@
 //import {toHaveAttribute, toHaveTextContent} from '@testing-library/jest-dom'
 // import * as jestDOM from '@testing-library/jest-dom'
 
-// import '@testing-library/jest-dom/extend-expect' get rid of importing jest dom and extending expect manually
+import '@testing-library/jest-dom/extend-expect' //get rid of importing jest dom and extending expect manually
 
-// we can remove the above improt since this line has been inluded in the jest config so all test files have coverage of this import
+// we can remove the above import since this line has been included in the jest config so all test files have coverage of this import
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {FavoriteNumber} from '../favorite-number'
