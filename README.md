@@ -354,3 +354,52 @@ test('entering an invalid value shows an error message', () => {
 Typically, using 'get' will leave you with much better error messages, but if
 you do need to verify that an element is not rendered, then using a query
 function is the way to go.
+
+# Test Accessibility of Rendered React Components with jest-axe
+
+While not all of accessibility testing of a web application can be automated,
+much of it can be and quite easily using `axe-core` and `jest-axe`. Let’s see
+how to integrate this with React Testing Library to help catch common
+accessibility issues.
+
+One of the cool things that jest-axe gives us is a specific assertion. We're
+going to have toHaveNoViolations. We'll say expect.extend with
+toHaveNoViolations. With that, I can now say expect my results
+`toHaveNoViolations`, and I can save that.
+
+```js
+import {axe, toHaveNoViolations} from 'jest-axe'
+
+expect.extend(toHaveNoViolations)
+
+test('the form is accessible', () => { const {container} = render(<Form />)
+const results = await axe(container) expect(results).toHaveNoViolations() })
+```
+
+Jest-axe also exposes a module that we can import, jest-axe/extend-expect.
+
+```js
+import 'jest-axe/extend-expect'
+```
+
+# Mock HTTP Requests with jest.mock in React Component Tests
+
+jest.mock
+
+# Mock HTTP Requests with Dependency Injection in React Component Tests
+
+Now, normally I would recommend sticking with jest.mock, but this is a great
+solution if the environment that you're running in doesn't support great module
+mocking capabilities.
+
+In review what we did here, was we got rid of the jest.mock right here, we got
+rid of the import that we had before, and now, we're creating a mock function.
+Everything else stayed the same, except we passed out that mock function as a
+prop to our component.
+
+Then we accept that prop and default it to what we were using before, and then
+we just use that function, whether it's coming from props or if we're just using
+the default value for that prop.
+
+By using dependency injection, our GreetingLoader can support not only our jest
+testing environment, but other environments like Storybook, for example.
